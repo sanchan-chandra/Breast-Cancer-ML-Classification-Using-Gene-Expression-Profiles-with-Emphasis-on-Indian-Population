@@ -74,10 +74,10 @@ scale_pos = neg / pos
 print("\n[1/5] Baseline XGBoost (all features)...")
 xgb_base = xgb.XGBClassifier(
     n_estimators=10,
-    max_depth=2,              # very shallow — strong bias against overfitting
+    max_depth=2,              
     learning_rate=0.1,
-    reg_alpha=10.0,           # heavy L1 regularisation
-    reg_lambda=10.0,          # heavy L2 regularisation
+    reg_alpha=10.0,           
+    reg_lambda=10.0,         
     scale_pos_weight=scale_pos,
     eval_metric='logloss',
     use_label_encoder=False,
