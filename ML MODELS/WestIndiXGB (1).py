@@ -1,14 +1,6 @@
-"""
-WestIndiXGB.py
-==============
-Breast Cancer Gene Expression Classification
+"""Breast Cancer Gene Expression Classification
 Train on Western Dataset (shapfeatures.csv), Test on Indian Dataset (indian_AG.csv)
-Model: XGBoost
-Includes: Preprocessing, SMOTE, Biomarker Discovery (XGB native + SHAP),
-          Refined XGBoost, Cross-Validation (on Western), Full Evaluation on Indian,
-          Threshold Tuning, Full Plots
-Results saved to: results/WestIndiXGB/
-"""
+Model: XGBoost"""
 
 import os
 import numpy as np
@@ -31,9 +23,7 @@ from imblearn.over_sampling import SMOTE
 import xgboost as xgb
 import shap
 
-# ─────────────────────────────────────────────────────────────────────
-# PATHS
-# ─────────────────────────────────────────────────────────────────────
+
 WESTERN_PATH = "C:shapfeatures.csv"
 INDIAN_PATH  = "C:indian_AG.csv"
 RESULTS_DIR  = "C:WestIndiXGB.csv"
@@ -49,9 +39,7 @@ def savefig(name):
 sns.set_style("darkgrid")
 BLUE, RED, GREEN, PURPLE, AMBER = '#4f8ef7', '#ef4444', '#10b981', '#7c3aed', '#f59e0b'
 
-# ─────────────────────────────────────────────────────────────────────
-# 1. LOAD DATA
-# ─────────────────────────────────────────────────────────────────────
+
 print("=" * 65)
 print("WestIndiXGB — Train: Western  |  Test: Indian  |  Model: XGBoost")
 print("=" * 65)
@@ -74,9 +62,7 @@ def load_dataset(path, name):
 X_west, y_west, feat_west = load_dataset(WESTERN_PATH, "Western (train)")
 X_indi, y_indi, feat_indi = load_dataset(INDIAN_PATH,  "Indian  (test)")
 
-# ─────────────────────────────────────────────────────────────────────
-# 2. ALIGN FEATURES
-# ─────────────────────────────────────────────────────────────────────
+
 common_genes = sorted(set(feat_west) & set(feat_indi))
 print(f"\nCommon genes between datasets: {len(common_genes)}")
 print(f"  Western-only genes: {len(set(feat_west) - set(feat_indi))}")
@@ -101,25 +87,19 @@ pd.DataFrame({
     'indian_tumor':    [(y_indi==1).sum()],
 }).to_csv(os.path.join(RESULTS_DIR, 'dataset_summary.csv'), index=False)
 
-# ─────────────────────────────────────────────────────────────────────
-# 3. SCALE — fit on Western, apply to Indian
-# ─────────────────────────────────────────────────────────────────────
+
 scaler    = StandardScaler()
 X_west_sc = scaler.fit_transform(X_west_aligned)
 X_indi_sc = scaler.transform(X_indi_aligned)
 
-# ─────────────────────────────────────────────────────────────────────
-# 4. SMOTE on Western
-# ─────────────────────────────────────────────────────────────────────
+
 smote = SMOTE(random_state=42, k_neighbors=5)
 X_west_res, y_west_res = smote.fit_resample(X_west_sc, y_west)
 print(f"\nAfter SMOTE — Tumor: {(y_west_res==1).sum()}  Normal: {(y_west_res==0).sum()}")
 
 scale_pos = (y_west_res == 0).sum() / (y_west_res == 1).sum()
 
-# ─────────────────────────────────────────────────────────────────────
-# 5. BASELINE XGBoost (all common features)
-# ─────────────────────────────────────────────────────────────────────
+
 print("\n[1/5] Training baseline XGBoost (all common features)...")
 xgb_base = xgb.XGBClassifier(
     n_estimators=300,
@@ -144,9 +124,7 @@ print(f"  Accuracy : {accuracy_score(y_indi, y_pred_base):.4f}")
 print(f"  ROC-AUC  : {roc_auc_score(y_indi, y_prob_base):.4f}")
 print(classification_report(y_indi, y_pred_base, target_names=['Normal', 'Tumor']))
 
-# ─────────────────────────────────────────────────────────────────────
-# 6. BIOMARKER DISCOVERY — XGBoost native importance (3 types)
-# ─────────────────────────────────────────────────────────────────────
+
 print("\n[2/5] Biomarker discovery via XGBoost native importance...")
 
 for imp_type in ['weight', 'gain', 'cover']:
@@ -164,9 +142,6 @@ for imp_type in ['weight', 'gain', 'cover']:
 print(f"  Top 10 by 'gain':")
 print(imp_series.head(10).to_string())
 
-# ─────────────────────────────────────────────────────────────────────
-# 7. SHAP EXPLAINABILITY (on Indian test set)
-# ─────────────────────────────────────────────────────────────────────
 print("\n[3/5] SHAP explainability (on Indian test set)...")
 explainer  = shap.TreeExplainer(xgb_base)
 N_EXPLAIN  = min(500, len(X_indi_sc))
@@ -188,9 +163,7 @@ shap_importance.head(50).reset_index().rename(
 print("  Top 10 SHAP biomarkers:")
 print(shap_importance.head(10).to_string())
 
-# ─────────────────────────────────────────────────────────────────────
-# 8. REFINED XGBoost — Top-30 SHAP genes
-# ─────────────────────────────────────────────────────────────────────
+
 print("\n[4/5] Training refined XGBoost (top-30 SHAP genes)...")
 TOP_N     = 30
 top_genes = shap_importance.head(TOP_N).index.tolist()
@@ -224,9 +197,7 @@ print(f"  Accuracy : {accuracy_score(y_indi, y_pred_ref):.4f}")
 print(f"  ROC-AUC  : {roc_auc_score(y_indi, y_prob_ref):.4f}")
 print(classification_report(y_indi, y_pred_ref, target_names=['Normal', 'Tumor']))
 
-# ─────────────────────────────────────────────────────────────────────
-# 9. CROSS-VALIDATION on Western (internal)
-# ─────────────────────────────────────────────────────────────────────
+
 print("\n[5/5] 5-fold CV on Western data (internal validation)...")
 X_west_top_all = X_west_sc[:, top_idx]
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -247,9 +218,7 @@ print(f"  CV ROC-AUC : {cv_auc.mean():.4f} ± {cv_auc.std():.4f}")
 print(f"  CV Accuracy: {cv_acc.mean():.4f} ± {cv_acc.std():.4f}")
 print(f"  CV Macro F1: {cv_f1.mean():.4f} ± {cv_f1.std():.4f}")
 
-# ─────────────────────────────────────────────────────────────────────
-# 10. THRESHOLD TUNING (on Indian test set)
-# ─────────────────────────────────────────────────────────────────────
+
 thresholds = np.arange(0.10, 0.91, 0.01)
 thresh_records = []
 for t in thresholds:
@@ -277,9 +246,6 @@ print(f"\n  Recommended threshold: {BEST_T:.2f}")
 print(f"  Tumor recall  : {recall_score(y_indi, y_pred_tuned, pos_label=1):.4f}")
 print(f"  Normal recall : {recall_score(y_indi, y_pred_tuned, pos_label=0):.4f}")
 
-# ─────────────────────────────────────────────────────────────────────
-# 11. SAVE SUMMARIES
-# ─────────────────────────────────────────────────────────────────────
 summary = pd.DataFrame([
     {
         'model':         'Baseline XGB (all common features)',
@@ -335,9 +301,7 @@ pd.DataFrame({
 }).to_csv(os.path.join(RESULTS_DIR, 'biomarker_overlap_Gain_SHAP.csv'), index=False)
 print(f"\nBiomarker overlap (Gain top-30 ∩ SHAP top-30): {len(overlap)} genes")
 
-# ─────────────────────────────────────────────────────────────────────
-# 12. PLOTS
-# ─────────────────────────────────────────────────────────────────────
+
 print("\nGenerating plots...")
 
 # Plot 1: Confusion matrices
@@ -509,9 +473,7 @@ ax.legend(fontsize=10); ax.grid(axis='y', alpha=0.3)
 plt.tight_layout()
 savefig('plot11_generalization_gap.png')
 
-# ─────────────────────────────────────────────────────────────────────
-# DONE
-# ─────────────────────────────────────────────────────────────────────
+
 print("\n" + "=" * 65)
 print(f"WestIndiXGB — DONE. All results saved to: {RESULTS_DIR}")
 print("=" * 65)
