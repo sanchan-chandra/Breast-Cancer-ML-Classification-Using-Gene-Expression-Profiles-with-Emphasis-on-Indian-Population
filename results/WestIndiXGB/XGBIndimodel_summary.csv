@@ -1,0 +1,4 @@
+model,test_set,accuracy,roc_auc,tumor_recall,normal_recall,macro_f1,threshold
+Baseline XGB (all common features),Indian,0.5,0.98974435196195,1.0,0.0,0.3333333333333333,0.5
+"Refined XGB (top-30, t=0.50)",Indian,0.5,0.9782996432818073,1.0,0.0,0.3333333333333333,0.5
+"Refined XGB (top-30, t=0.90 tuned)",Indian,0.5560344827586207,0.9782996432818073,1.0,0.11206896551724138,0.44704385051486756,0.9

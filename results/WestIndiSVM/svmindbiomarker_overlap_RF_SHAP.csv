@@ -1,0 +1,15 @@
+gene,in_rf_top30,in_shap_top30
+ACSM2A,True,True
+AFM,True,True
+AMY1A,True,True
+APOB,True,True
+C16ORF82,True,True
+CPA1,True,True
+CPA2,True,True
+FEZF2,True,True
+GABRA4,True,True
+GYS2,True,True
+MYH1,True,True
+PGA3,True,True
+PGA5,True,True
+SLC36A2,True,True
