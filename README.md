@@ -1,0 +1,2 @@
+# Breast-Cancer-ML-Classification-Using-Gene-Expression-Profiles-with-Emphasis-on-Indian-Population
+This project develops a machine learning pipeline for breast cancer classification using gene expression data, evaluating cross-population generalization between Western and Indian cohorts. Models trained on Western data are validated on Indian datasets to assess performance drop and identify population-specific biomarkers.
